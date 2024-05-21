@@ -1,15 +1,8 @@
--- Set <space> as the leader key
--- See `:help mapleader`
---  NOTE: Must happen before plugins are loaded (otherwise wrong leader will be used)
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
-vim.keymap.set('n', '<leader>pv', vim.cmd.Ex)
 
--- This is going to get me cancelled
-vim.keymap.set('i', '<C-c>', '<Esc>')
-
--- Set to true if you have a Nerd Font installed
-vim.g.have_nerd_font = false
+-- Set to true if you have a Nerd Font installed and selected in the terminal
+vim.g.have_nerd_font = true
 
 -- [[ Setting options ]]
 -- See `:help vim.opt`
@@ -20,7 +13,7 @@ vim.g.have_nerd_font = false
 vim.opt.number = true
 -- You can also add relative line numbers, to help with jumping.
 --  Experiment for yourself to see if you like it!
--- vim.opt.relativenumber = true
+vim.opt.relativenumber = true
 
 -- Enable mouse mode, can be useful for resizing splits for example!
 vim.opt.mouse = 'a'
@@ -71,13 +64,6 @@ vim.opt.cursorline = true
 
 -- Minimal number of screen lines to keep above and below the cursor.
 vim.opt.scrolloff = 0
-
-vim.opt.tabstop = 4
-vim.opt.softtabstop = 4
-vim.opt.shiftwidth = 4
-vim.opt.expandtab = true
-vim.opt.termguicolors = true
-vim.opt.updatetime = 50
 
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
@@ -164,76 +150,6 @@ require('lazy').setup({
 
   -- "gc" to comment visual regions/lines
   { 'numToStr/Comment.nvim', opts = {} },
-  {
-    'theprimeagen/vim-be-good',
-
-    dependencies = {
-      'nvim-lua/plenary.nvim',
-    },
-
-    config = function() end,
-  },
-
-  {
-    'theprimeagen/harpoon',
-    branch = 'harpoon2',
-    dependencies = { 'nvim-lua/plenary.nvim' },
-    config = function()
-      require('harpoon'):setup()
-    end,
-    keys = {
-      {
-        '<leader>A',
-        function()
-          require('harpoon'):list():append()
-        end,
-        desc = 'harpoon file',
-      },
-      {
-        '<leader>a',
-        function()
-          local harpoon = require 'harpoon'
-          harpoon.ui:toggle_quick_menu(harpoon:list())
-        end,
-        desc = 'harpoon quick menu',
-      },
-      {
-        '<leader>1',
-        function()
-          require('harpoon'):list():select(1)
-        end,
-        desc = 'harpoon to file 1',
-      },
-      {
-        '<leader>2',
-        function()
-          require('harpoon'):list():select(2)
-        end,
-        desc = 'harpoon to file 2',
-      },
-      {
-        '<leader>3',
-        function()
-          require('harpoon'):list():select(3)
-        end,
-        desc = 'harpoon to file 3',
-      },
-      {
-        '<leader>4',
-        function()
-          require('harpoon'):list():select(4)
-        end,
-        desc = 'harpoon to file 4',
-      },
-      {
-        '<leader>5',
-        function()
-          require('harpoon'):list():select(5)
-        end,
-        desc = 'harpoon to file 5',
-      },
-    },
-  },
 
   -- Here is a more advanced example where we pass configuration
   -- options to `gitsigns.nvim`. This is equivalent to the following Lua:
@@ -281,7 +197,14 @@ require('lazy').setup({
         ['<leader>r'] = { name = '[R]ename', _ = 'which_key_ignore' },
         ['<leader>s'] = { name = '[S]earch', _ = 'which_key_ignore' },
         ['<leader>w'] = { name = '[W]orkspace', _ = 'which_key_ignore' },
+        ['<leader>t'] = { name = '[T]oggle', _ = 'which_key_ignore' },
+        ['<leader>h'] = { name = 'Git [H]unk', _ = 'which_key_ignore' },
+        ['<leader>H'] = { name = '[H]Harpoon File', _ = 'which_key_ignore' },
       }
+      -- visual mode
+      require('which-key').register({
+        ['<leader>h'] = { 'Git [H]unk' },
+      }, { mode = 'v' })
     end,
   },
 
@@ -401,7 +324,7 @@ require('lazy').setup({
     'neovim/nvim-lspconfig',
     dependencies = {
       -- Automatically install LSPs and related tools to stdpath for Neovim
-      'williamboman/mason.nvim',
+      { 'williamboman/mason.nvim', config = true }, -- NOTE: Must be loaded before dependants
       'williamboman/mason-lspconfig.nvim',
       'WhoIsSethDaniel/mason-tool-installer.nvim',
 
@@ -503,16 +426,37 @@ require('lazy').setup({
           -- When you move your cursor, the highlights will be cleared (the second autocommand).
           local client = vim.lsp.get_client_by_id(event.data.client_id)
           if client and client.server_capabilities.documentHighlightProvider then
+            local highlight_augroup = vim.api.nvim_create_augroup('kickstart-lsp-highlight', { clear = false })
             vim.api.nvim_create_autocmd({ 'CursorHold', 'CursorHoldI' }, {
               buffer = event.buf,
+              group = highlight_augroup,
               callback = vim.lsp.buf.document_highlight,
             })
 
             vim.api.nvim_create_autocmd({ 'CursorMoved', 'CursorMovedI' }, {
               buffer = event.buf,
+              group = highlight_augroup,
               callback = vim.lsp.buf.clear_references,
             })
           end
+
+          -- The following autocommand is used to enable inlay hints in your
+          -- code, if the language server you are using supports them
+          --
+          -- This may be unwanted, since they displace some of your code
+          if client and client.server_capabilities.inlayHintProvider and vim.lsp.inlay_hint then
+            map('<leader>th', function()
+              vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled())
+            end, '[T]oggle Inlay [H]ints')
+          end
+        end,
+      })
+
+      vim.api.nvim_create_autocmd('LspDetach', {
+        group = vim.api.nvim_create_augroup('kickstart-lsp-detach', { clear = true }),
+        callback = function(event)
+          vim.lsp.buf.clear_references()
+          vim.api.nvim_clear_autocmds { group = 'kickstart-lsp-highlight', buffer = event.buf }
         end,
       })
 
@@ -699,6 +643,12 @@ require('lazy').setup({
           --  This will expand snippets if the LSP sent a snippet.
           ['<C-y>'] = cmp.mapping.confirm { select = true },
 
+          -- If you prefer more traditional completion keymaps,
+          -- you can uncomment the following lines
+          --['<CR>'] = cmp.mapping.confirm { select = true },
+          --['<Tab>'] = cmp.mapping.select_next_item(),
+          --['<S-Tab>'] = cmp.mapping.select_prev_item(),
+
           -- Manually trigger a completion from nvim-cmp.
           --  Generally you don't need this, because nvim-cmp will display
           --  completions whenever it has completion options available.
@@ -735,21 +685,14 @@ require('lazy').setup({
     end,
   },
 
-  { -- You can easily change to a different colorscheme.
-    -- Change the name of the colorscheme plugin below, and then
-    -- change the command in the config to whatever the name of that colorscheme is.
-    --
-    -- If you want to see what colorschemes are already installed, you can use `:Telescope colorscheme`.
-    'folke/tokyonight.nvim',
-    priority = 1000, -- Make sure to load this before all the other start plugins.
-    init = function()
-      -- Load the colorscheme here.
-      -- Like many other themes, this one has different styles, and you could load
-      -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
-      vim.cmd.colorscheme 'tokyonight-night'
-
-      -- You can configure highlights by doing something like:
-      vim.cmd.hi 'Comment gui=none'
+  {
+    'EdenEast/nightfox.nvim',
+    priority = 1000,
+    lazy = false,
+    enabled = true,
+    config = function()
+      vim.cmd.colorscheme 'nightfox'
+      -- vim.cmd.colorscheme("nordfox")
     end,
   },
 
@@ -797,7 +740,7 @@ require('lazy').setup({
     'nvim-treesitter/nvim-treesitter',
     build = ':TSUpdate',
     opts = {
-      ensure_installed = { 'bash', 'c', 'html', 'lua', 'luadoc', 'markdown', 'vim', 'vimdoc', 'java', 'kotlin' },
+      ensure_installed = { 'bash', 'c', 'html', 'lua', 'luadoc', 'markdown', 'vim', 'vimdoc' },
       -- Autoinstall languages that are not installed
       auto_install = true,
       highlight = {
@@ -808,13 +751,12 @@ require('lazy').setup({
         additional_vim_regex_highlighting = { 'ruby' },
       },
       indent = { enable = true, disable = { 'ruby' } },
-      autotag = {
-        enable = true,
-      },
     },
     config = function(_, opts)
       -- [[ Configure Treesitter ]] See `:help nvim-treesitter`
 
+      -- Prefer git instead of curl in order to improve connectivity in some environments
+      require('nvim-treesitter.install').prefer_git = true
       ---@diagnostic disable-next-line: missing-fields
       require('nvim-treesitter.configs').setup(opts)
 
@@ -836,16 +778,19 @@ require('lazy').setup({
   --  Here are some example plugins that I've included in the Kickstart repository.
   --  Uncomment any of the lines below to enable them (you will need to restart nvim).
   --
-  -- require 'kickstart.plugins.debug',
-  -- require 'kickstart.plugins.indent_line',
-  -- require 'kickstart.plugins.lint',
+  require 'kickstart.plugins.debug',
+  require 'kickstart.plugins.indent_line',
+  require 'kickstart.plugins.lint',
+  require 'kickstart.plugins.autopairs',
+  require 'kickstart.plugins.neo-tree',
+  require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
 
   -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
   --    This is the easiest way to modularize your config.
   --
   --  Uncomment the following line and add your plugins to `lua/custom/plugins/*.lua` to get going.
   --    For additional information, see `:help lazy.nvim-lazy.nvim-structuring-your-plugins`
-  -- { import = 'custom.plugins' },
+  { import = 'custom.plugins' },
 }, {
   ui = {
     -- If you are using a Nerd Font: set icons to an empty table which will use the
