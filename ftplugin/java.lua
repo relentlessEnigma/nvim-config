@@ -3,6 +3,8 @@ local jdtls = require('jdtls')
 local project_name = vim.fn.fnamemodify(vim.fn.getcwd(), ':p:h:t')
 local workspace_dir = vim.env.HOME .. '\\jdtls-workspace\\' .. project_name
 
+-- TODO: Change this paths to mac environment
+
 -- Needed for debugging
 local bundles = {
   vim.fn.glob(vim.env.HOME .. '\\AppData\\Local\\nvim-data\\mason\\share\\java-debug-adapter\\com.microsoft.java.debug.plugin.jar'),
