@@ -8,7 +8,7 @@ opt.nu = true
 opt.relativenumber = true
 
 -- Session Management
-opt.sessionoptions="blank,buffers,curdir,folds,help,tabpages,winsize,winpos,terminal,localoptions"
+opt.sessionoptions = "blank,buffers,curdir,folds,help,tabpages,winsize,winpos,terminal,localoptions"
 
 -- Tabs & Indentation
 opt.tabstop = 4
@@ -41,9 +41,9 @@ opt.cursorline = true
 --opt.background = "dark"
 opt.scrolloff = 0
 opt.signcolumn = "yes"
-vim.diagnostic.config {
-  float = { border = "rounded" }, -- add border to diagnostic popups
-}
+vim.diagnostic.config({
+	float = { border = "rounded" }, -- add border to diagnostic popups
+})
 
 -- Backspace
 opt.backspace = "indent,eol,start"
