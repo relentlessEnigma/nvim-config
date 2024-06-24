@@ -1,20 +1,19 @@
 -- JDTLS (Java LSP) configuration
 local jdtls = require("jdtls")
 local project_name = vim.fn.fnamemodify(vim.fn.getcwd(), ":p:h:t")
-local workspace_dir = vim.env.HOME .. "\\jdtls-workspace\\" .. project_name
+local workspace_dir = vim.env.HOME .. "/jdtls-workspace/" .. project_name
 
 -- Needed for debugging
 local bundles = {
 	vim.fn.glob(
-		vim.env.HOME
-			.. "\\AppData\\Local\\nvim-data\\mason\\share\\java-debug-adapter\\com.microsoft.java.debug.plugin.jar"
+		vim.env.HOME .. "/.local/share/nvim/mason/share/java-debug-adapter/com.microsoft.java.debug.plugin.jar"
 	),
 }
 
 -- Needed for running/debugging unit tests
 vim.list_extend(
 	bundles,
-	vim.split(vim.fn.glob(vim.env.HOME .. "\\AppData\\Local\\nvim-data\\mason\\share\\java-test\\*.jar", 1), "\n")
+	vim.split(vim.fn.glob(vim.env.HOME .. "/.local/share/nvim/mason/share/java-test/*.jar", 1), "\n")
 )
 
 -- See `:help vim.lsp.start_client` for an overview of the supported `config` options.
@@ -28,7 +27,7 @@ local config = {
 		"-Declipse.product=org.eclipse.jdt.ls.core.product",
 		"-Dlog.protocol=true",
 		"-Dlog.level=ALL",
-		"-javaagent:" .. vim.env.HOME .. "\\AppData\\Local\\nvim-data\\mason\\share\\jdtls\\lombok.jar",
+		"-javaagent:" .. vim.env.HOME .. "/.local/share/nvim/mason/share/jdtls/lombok.jar",
 		"-Xmx4g",
 		"--add-modules=ALL-SYSTEM",
 		"--add-opens",
@@ -38,9 +37,9 @@ local config = {
 
 		-- Eclipse jdtls location
 		"-jar",
-		vim.env.HOME .. "\\AppData\\Local\\nvim-data\\mason\\share\\jdtls\\plugins\\org.eclipse.equinox.launcher.jar",
+		vim.env.HOME .. "/.local/share/nvim/mason/share/jdtls/plugins/org.eclipse.equinox.launcher.jar",
 		"-configuration",
-		vim.env.HOME .. "\\AppData\\Local\\nvim-data\\mason\\packages\\jdtls\\config_win",
+		vim.env.HOME .. "/.local/share/nvim/mason/packages/jdtls/config_mac",
 		"-data",
 		workspace_dir,
 	},
@@ -53,7 +52,7 @@ local config = {
 	-- See https://github.com/eclipse/eclipse.jdt.ls/wiki/Running-the-JAVA-LS-server-from-the-command-line#initialize-request
 	settings = {
 		java = {
-			home = "C:\\Program Files\\Java\\jdk-17",
+			home = "/usr/bin/java",
 			eclipse = {
 				downloadSources = true,
 			},
@@ -62,16 +61,8 @@ local config = {
 				-- The runtime name parameters need to match specific Java execution environments.  See https://github.com/tamago324/nlsp-settings.nvim/blob/2a52e793d4f293c0e1d61ee5794e3ff62bfbbb5d/schemas/_generated/jdtls.json#L317-L334
 				runtimes = {
 					{
-						name = "JavaSE-11",
-						path = "C:\\Program Files\\Java\\jdk-11",
-					},
-					{
-						name = "JavaSE-17",
-						path = "C:\\Program Files\\Java\\jdk-17",
-					},
-					{
-						name = "JavaSE-19",
-						path = "C:\\Program Files\\Java\\jdk-19",
+						name = "JavaSE-21",
+						path = "/usr/bin/java",
 					},
 				},
 			},
